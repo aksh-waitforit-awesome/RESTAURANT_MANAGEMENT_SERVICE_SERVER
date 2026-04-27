@@ -4,10 +4,10 @@ const TableSession = require("../models/TableSession")
 const NotFoundError = require("../errors/notFoundError")
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY)
 const asyncWrapper = require("../utils/asyncWrapper")
- exports.handleStripeWebhook = async (req, res) => {
+exports.handleStripeWebhook = async (req, res) => {
   const sig = req.headers["stripe-signature"]
   let event
-
+  console.log("Received Stripe Webhook:", req.body)
   try {
     // Verify the event came from Stripe
     event = stripe.webhooks.constructEvent(
