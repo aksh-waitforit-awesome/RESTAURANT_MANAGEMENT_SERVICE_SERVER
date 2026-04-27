@@ -4,7 +4,7 @@ const TableSession = require("../models/TableSession")
 const NotFoundError = require("../errors/notFoundError")
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY)
 const asyncWrapper = require("../utils/asyncWrapper")
-exports.handleStripeWebhook = async (req, res) => {
+/*exports.handleStripeWebhook = async (req, res) => {
   const sig = req.headers["stripe-signature"]
   let event
 
@@ -58,7 +58,54 @@ exports.handleStripeWebhook = async (req, res) => {
 
   // Return a 200 response to Stripe to acknowledge receipt
   res.json({ received: true })
-}
+} */
+exports.handleStripeWebhook = async (req, res) => {
+  const sig = req.headers["stripe-signature"];
+  let event;
+
+  try {
+    event = stripe.webhooks.constructEvent(
+      req.body, // This is the raw buffer from express.raw
+      sig,
+      process.env.END_POINT_SECRET
+    );
+  } catch (err) {
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  // Acknowledge receipt to Stripe immediately
+  res.json({ received: true });
+
+  // Handle the logic AFTER sending the response
+  if (event.type === "checkout.session.completed") {
+    const session = event.data.object;
+    const orderId = session.metadata.orderId;
+
+    try {
+      const order = await Order.findById(orderId);
+      if (!order) return;
+
+      // Your logic...
+      if (order.orderType === "dinning") {
+        order.paymentStatus = "paid";
+      } else if (order.orderType === "takeaway" && order.orderStatus === "ready") {
+        order.paymentStatus = "paid";
+        order.orderStatus = "completed";
+      } else {
+        order.paymentStatus = "paid";
+        order.orderStatus = "preparing";
+        
+        // WebSocket trigger
+        if (req.app.locals.newOnlineOrderPlaced) {
+          req.app.locals.newOnlineOrderPlaced(order._id);
+        }
+      }
+      await order.save();
+    } catch (dbError) {
+      console.error(`❌ DB Error: ${dbError.message}`);
+    }
+  }
+};
 exports.createOrder = async (req, res, next) => {
   try {
     const { customer, items, orderType, paymentMethod, totalAmount } = req.body
