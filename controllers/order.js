@@ -60,52 +60,59 @@ const asyncWrapper = require("../utils/asyncWrapper")
   res.json({ received: true })
 } */
 exports.handleStripeWebhook = async (req, res) => {
-  const sig = req.headers["stripe-signature"];
-  let event;
-
+  const sig = req.headers["stripe-signature"]
+  let event
+  console.log("Received Stripe Webhook:", req.body)
   try {
     event = stripe.webhooks.constructEvent(
       req.body, // This is the raw buffer from express.raw
       sig,
-      process.env.END_POINT_SECRET
-    );
+      process.env.END_POINT_SECRET,
+    )
   } catch (err) {
-    return res.status(400).send(`Webhook Error: ${err.message}`);
+    return res.status(400).send(`Webhook Error: ${err.message}`)
   }
 
   // Acknowledge receipt to Stripe immediately
-  res.json({ received: true });
+  res.json({ received: true })
 
   // Handle the logic AFTER sending the response
   if (event.type === "checkout.session.completed") {
-    const session = event.data.object;
-    const orderId = session.metadata.orderId;
+    const session = event.data.object
+    const orderId = session.metadata.orderId
 
     try {
-      const order = await Order.findById(orderId);
-      if (!order) return;
+      const order = await Order.findById(orderId)
+      console.log(
+        `Processing Order ID: ${orderId}, Current Status: ${order?.orderStatus}`,
+      )
+      if (!order) return
 
       // Your logic...
       if (order.orderType === "dinning") {
-        order.paymentStatus = "paid";
-      } else if (order.orderType === "takeaway" && order.orderStatus === "ready") {
-        order.paymentStatus = "paid";
-        order.orderStatus = "completed";
+        order.paymentStatus = "paid"
+      } else if (
+        order.orderType === "takeaway" &&
+        order.orderStatus === "ready"
+      ) {
+        order.paymentStatus = "paid"
+        order.orderStatus = "completed"
       } else {
-        order.paymentStatus = "paid";
-        order.orderStatus = "preparing";
-        
+        console.log(`Updating Order ${order.orderNumber} to PAID and PREPARING`)
+        order.paymentStatus = "paid"
+        order.orderStatus = "preparing"
+
         // WebSocket trigger
         if (req.app.locals.newOnlineOrderPlaced) {
-          req.app.locals.newOnlineOrderPlaced(order._id);
+          req.app.locals.newOnlineOrderPlaced(order._id)
         }
       }
-      await order.save();
+      await order.save()
     } catch (dbError) {
-      console.error(`❌ DB Error: ${dbError.message}`);
+      console.error(`❌ DB Error: ${dbError.message}`)
     }
   }
-};
+}
 exports.createOrder = async (req, res, next) => {
   try {
     const { customer, items, orderType, paymentMethod, totalAmount } = req.body
