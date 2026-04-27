@@ -4,7 +4,7 @@ const TableSession = require("../models/TableSession")
 const NotFoundError = require("../errors/notFoundError")
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY)
 const asyncWrapper = require("../utils/asyncWrapper")
-exports.handleStripeWebhook = async (req, res) => {
+/*exports.handleStripeWebhook = async (req, res) => {
   const sig = req.headers["stripe-signature"]
   let event
   console.log("Received Stripe Webhook:", req.body)
@@ -58,7 +58,7 @@ exports.handleStripeWebhook = async (req, res) => {
 
   // Return a 200 response to Stripe to acknowledge receipt
   res.json({ received: true })
-} /*
+} */
 exports.handleStripeWebhook = async (req, res) => {
   const sig = req.headers["stripe-signature"]
   let event
@@ -112,7 +112,7 @@ exports.handleStripeWebhook = async (req, res) => {
       console.error(`❌ DB Error: ${dbError.message}`)
     }
   }
-}*/
+}
 exports.createOrder = async (req, res, next) => {
   try {
     const { customer, items, orderType, paymentMethod, totalAmount } = req.body
