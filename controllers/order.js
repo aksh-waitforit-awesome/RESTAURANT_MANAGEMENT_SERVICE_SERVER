@@ -59,7 +59,7 @@ const asyncWrapper = require("../utils/asyncWrapper")
   // Return a 200 response to Stripe to acknowledge receipt
   res.json({ received: true })
 } */
-exports.handleStripeWebhook = async (req, res) => {
+/*exports.handleStripeWebhook = async (req, res) => {
   const sig = req.headers["stripe-signature"]
   let event
   console.log("Received Stripe Webhook:", req.body)
@@ -108,6 +108,66 @@ exports.handleStripeWebhook = async (req, res) => {
         }
       }
       await order.save()
+    } catch (dbError) {
+      console.error(`❌ DB Error: ${dbError.message}`)
+    }
+  }
+}*/
+exports.handleStripeWebhook = async (req, res) => {
+  const sig = req.headers["stripe-signature"]
+  let event
+
+  try {
+    event = stripe.webhooks.constructEvent(
+      req.body,
+      sig,
+      process.env.END_POINT_SECRET,
+    )
+  } catch (err) {
+    return res.status(400).send(`Webhook Error: ${err.message}`)
+  }
+
+  res.json({ received: true })
+
+  if (event.type === "checkout.session.completed") {
+    const session = event.data.object
+    const orderId = session.metadata.orderId
+
+    try {
+      const order = await Order.findById(orderId)
+      if (!order || order.paymentStatus === "paid") return
+
+      // --- SCENARIO 1: DINING ---
+      // Customer is at the table, just paying the bill. Status stays "ready" or "completed".
+      if (order.orderType === "dinning") {
+        order.paymentStatus = "paid"
+        // Note: We don't usually change orderStatus here because they are already eating.
+      }
+
+      // --- SCENARIO 2: TAKEAWAY (At the Counter) ---
+      // Customer pays online AFTER the food is already "ready".
+      else if (
+        order.orderType === "takeaway" &&
+        order.orderStatus === "ready"
+      ) {
+        order.paymentStatus = "paid"
+        order.orderStatus = "completed" // Mark as finished since they are at the counter.
+      }
+
+      // --- SCENARIO 3 & 4: NEW ONLINE ORDER (Delivery/Takeaway) ---
+      // Standard flow where payment happens BEFORE preparation starts.
+      else {
+        order.paymentStatus = "paid"
+        order.orderStatus = "preparing"
+
+        // Notify Kitchen via WebSocket only for NEW orders starting prep
+        if (req.app.locals.newOnlineOrderPlaced) {
+          req.app.locals.newOnlineOrderPlaced(order._id)
+        }
+      }
+
+      await order.save()
+      console.log(`✅ Order ${order.orderNumber} updated successfully.`)
     } catch (dbError) {
       console.error(`❌ DB Error: ${dbError.message}`)
     }
