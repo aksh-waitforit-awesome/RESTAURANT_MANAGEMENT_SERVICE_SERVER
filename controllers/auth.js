@@ -43,7 +43,9 @@ module.exports.login = asyncWrapper(async (req, res) => {
 
   const accessToken = user.generateAccessToken()
   const refreshToken = user.generateRefreshToken()
-
+  console.log("user:", user)
+  console.log("accessToken:", accessToken)
+  console.log("refreshToken:", refreshToken)
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
     secure: true,
