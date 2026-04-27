@@ -22,27 +22,18 @@ const { handleStripeWebhook } = require("./controllers/order")
 const { attachWebServer } = require("./ws/server")
 const app = express()
 const server = http.createServer(app)
-const allowedOrigins = [
-  "http://localhost:5173",
-  "http://localhost:5174",
-  process.env.FRONTEND_URL // You can add the Render URL here later
-];
-
 app.use(
   cors({
-    origin: function (origin, callback) {
-      // allow requests with no origin (like mobile apps or curl requests)
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.indexOf(origin) === -1) {
-        return callback(new Error("CORS policy blocked this origin"), false);
-      }
-      return callback(null, true);
-    },
-    credentials: true,
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:5174",
+      process.env.FRONTEND_URL,
+    ], // Specify your frontend URL
+    credentials: true, // Allow cookies to be sent
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
+  }),
+)
 app.post(
   "/api/webhook",
   express.raw({ type: "application/json" }),
