@@ -84,6 +84,15 @@ exports.assignDriver = asyncWrapper(async (req, res) => {
     // 4. Commit changes
     await session.commitTransaction()
 
+    if (res?.app?.locals?.orderStatusUpdated) {
+      console.log("order out for delivery")
+      res?.app?.locals?.orderStatusUpdated({
+        userId: order.userId,
+        orderId: order._id,
+        orderStatus: order.orderStatus,
+      })
+    }
+
     res.status(200).json({
       success: true,
       message: `Order #${order.orderNumber} assigned to ${driver.username}`,
@@ -137,9 +146,13 @@ exports.completeOrder = asyncWrapper(async (req, res) => {
     await User.findByIdAndUpdate(driverId, { isAvailable: true }, { session })
 
     await session.commitTransaction()
-    if(res?.app?.locals?.orderStatusUpdated){
+    if (res?.app?.locals?.orderStatusUpdated) {
       console.log("delivery completed")
-      res?.app?.locals?.orderStatusUpdated({userId:order.userId,orderId:order._id,orderStatus:order.orderStatus})
+      res?.app?.locals?.orderStatusUpdated({
+        userId: order.userId,
+        orderId: order._id,
+        orderStatus: order.orderStatus,
+      })
     }
     res.status(200).json({
       success: true,

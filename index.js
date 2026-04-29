@@ -25,9 +25,8 @@ const server = http.createServer(app)
 app.use(
   cors({
     origin: [
-      "http://localhost:5173",
-      "http://localhost:5174",
-      process.env.FRONTEND_URL,
+      process.env.NODE_ENV === "production" ? process.env.CLIENT_URL : "http://localhost:5173",
+      process.env.NODE_ENV === "production" ? process.env.ADMIN_URL : "http://localhost:5174",
     ], // Specify your frontend URL
     credentials: true, // Allow cookies to be sent
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],

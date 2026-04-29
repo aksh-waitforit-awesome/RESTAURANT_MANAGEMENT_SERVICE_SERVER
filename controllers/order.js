@@ -213,8 +213,8 @@ exports.createOrder = async (req, res, next) => {
         mode: "payment",
         // Crucial: Store the orderId so the Webhook can update the status later
         metadata: { orderId: newOrder._id.toString() },
-        success_url: `${process.env.CLIENT_URL}/order-success/${newOrder._id}`,
-        cancel_url: `${process.env.CLIENT_URL}/checkout`,
+        success_url: `${process.env.NODE_ENV === "production" ? process.env.CLIENT_URL : "http://localhost:5173"}/order-success/${newOrder._id}`,
+        cancel_url: `${process.env.NODE_ENV === "production" ? process.env.CLIENT_URL : "http://localhost:5173"}/checkout`,
       })
 
       // Update order with Stripe Session ID for tracking
@@ -411,8 +411,8 @@ exports.settleDinningOrder = asyncWrapper(async (req, res) => {
       })),
       mode: "payment",
       metadata: { orderId: order._id.toString() },
-      success_url: `${process.env.ADMIN_URL}/order/${order._id}`,
-      cancel_url: `${process.env.ADMIN_URL}`,
+      success_url: `${process.env.NODE_ENV === "production" ? process.env.ADMIN_URL : "http://localhost:5174"}/order/${order._id}`,
+      cancel_url: `${process.env.NODE_ENV === "production" ? process.env.ADMIN_URL : "http://localhost:5174"}`,
     })
 
     order.stripeSessionId = session.id
@@ -527,8 +527,8 @@ exports.pickupTakeAwayOrder = asyncWrapper(async (req, res) => {
       })),
       mode: "payment",
       metadata: { orderId: order._id.toString() },
-      success_url: `${process.env.ADMIN_URL}/order/${order._id}`,
-      cancel_url: `${process.env.ADMIN_URL}`,
+      success_url: `${process.env.NODE_ENV === "production" ? process.env.ADMIN_URL : "http://localhost:5174"}/order/${order._id}`,
+      cancel_url: `${process.env.NODE_ENV === "production" ? process.env.ADMIN_URL : "http://localhost:5174"}`,
     })
 
     order.stripeSessionId = session.id

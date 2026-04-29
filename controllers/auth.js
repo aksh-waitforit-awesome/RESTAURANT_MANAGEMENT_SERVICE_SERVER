@@ -48,8 +48,8 @@ module.exports.login = asyncWrapper(async (req, res) => {
   console.log("refreshToken:", refreshToken)
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
-    secure: true,
-    sameSite: "none",
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     maxAge: 7 * 24 * 60 * 60 * 1000,
   })
 
@@ -122,8 +122,8 @@ module.exports.refresh = asyncWrapper(async (req, res) => {
 module.exports.logout = asyncWrapper(async (req, res) => {
   res.clearCookie("refreshToken", {
     httpOnly: true,
-    secure: true,
-    sameSite: "none",
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
   })
   res.status(200).json({
     success: true,
