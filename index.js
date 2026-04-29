@@ -22,6 +22,7 @@ const { handleStripeWebhook } = require("./controllers/order")
 const { attachWebServer } = require("./ws/server")
 const app = express()
 const server = http.createServer(app)
+console.log("admin url", process.env.ADMIN_URL)
 app.use(
   cors({
     origin: [
