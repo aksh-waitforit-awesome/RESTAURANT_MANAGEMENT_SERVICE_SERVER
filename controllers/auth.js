@@ -132,11 +132,11 @@ module.exports.logout = asyncWrapper(async (req, res) => {
 })
 module.exports.getStaff = asyncWrapper(async (req, res) => {
   // ✅ Correct Syntax: { field: { $nin: [values] } }
-  const { search = "", page = 1, limit = 10 } = req.query
+  const { search = "", page = 1, limit = 10, role = "" } = req.query
   // Build Query Filter
   const query = {
     username: { $regex: search, $options: "i" },
-    role: { $nin: ["customer"] },
+    role: role ? role : { $nin: ["customer"] }, // If role filter is provided, use it; otherwise, ignore
   }
 
   const staff = await User.find(query)
