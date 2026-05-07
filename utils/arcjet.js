@@ -1,18 +1,18 @@
-// src/utils/arcjet.js
-const arcjet = require("@arcjet/node");
-const { tokenBucket } = require("@arcjet/node");
+// RIGHT: Destructure the arcjet function
+const { arcjet, tokenBucket, shield } = require("@arcjet/node");
 
 const aj = arcjet({
   key: process.env.ARCJET_KEY,
-  // This tells Arcjet to track the rate limit for each individual IP
-  characteristics: ["ip.src"], 
+  characteristics: ["ip.src"], // This solves your shared demo ID problem!
   rules: [
+    shield({ mode: "LIVE" }),
     tokenBucket({
       mode: "LIVE",
-      refillRate: 5,    // Give them 5 new staff slots...
-      interval: "24h", // ...every 24 hours
-      capacity: 5,     // Max 5 creations total per day
+      refillRate: 5,
+      interval: "24h",
+      capacity: 5,
     }),
   ],
 });
-module.exports = aj
+
+module.exports = aj;
