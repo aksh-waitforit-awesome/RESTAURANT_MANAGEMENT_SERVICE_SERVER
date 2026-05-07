@@ -91,9 +91,10 @@ module.exports.addUser = asyncWrapper(async (req, res) => {
   if (!username || !email || !password || !role) {
     throw new BadRequestError("Provide username, email, password and role")
   }
-  const requesterRole = user.req.role
+  const requesterRole = req.user.role
   const allowedRoles = ["admin", "demo_admin"]
   const isDemo = requesterRole === "demo_admin"
+  console.log(isDemo, requesterRole)
   const expireAt = isDemo ? new Date(Date.now() + 3 * 60 * 1000) : null
 
   // Prevent creating another admin

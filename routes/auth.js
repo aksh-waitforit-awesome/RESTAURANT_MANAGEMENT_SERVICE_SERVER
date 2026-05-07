@@ -28,7 +28,7 @@ router.get(
 router.post(
   "/staff/add",
   auth,
-  allowRoles("admin", "manager"),
+  allowRoles("admin", "demo_admin"),
   authController.addUser,
 )
 
