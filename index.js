@@ -23,6 +23,7 @@ const { attachWebServer } = require("./ws/server")
 const app = express()
 const server = http.createServer(app)
 console.log("admin url", process.env.ADMIN_URL)
+app.set("trust proxy", 1)
 app.use(
   cors({
     origin: [
