@@ -49,7 +49,15 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
-
+    isDemo: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    expireAt: {
+      type: Date,
+      index: { expires: 0 },
+    },
     createdAt: {
       type: Date,
       default: Date.now,
