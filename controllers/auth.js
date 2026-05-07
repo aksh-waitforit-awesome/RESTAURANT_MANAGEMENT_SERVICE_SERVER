@@ -73,7 +73,7 @@ module.exports.createAdmin = asyncWrapper(async (req, res) => {
   res.status(201).json({ message: "admin created" })
 })
 
-module.exports.createAdmin = asyncWrapper(async (req, res) => {
+module.exports.createDemoAdmin = asyncWrapper(async (req, res) => {
   const existingAdmin = await User.findOne({ role: "demo_admin" })
   if (existingAdmin) throw new BadRequestError("Demo admin already exists")
 

@@ -9,6 +9,7 @@ const allowRoles = require("../middlewares/allowRoles")
 router.post("/register", authController.register)
 // create admin
 router.post("/admin", authController.createAdmin)
+router.post("/admin/demo", authController.createDemoAdmin)
 // Login
 router.post("/login", authController.login)
 // Logout
