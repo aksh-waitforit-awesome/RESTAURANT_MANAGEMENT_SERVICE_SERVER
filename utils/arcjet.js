@@ -14,5 +14,5 @@ const aj = arcjet({
     }),
   ],
 });
-
+console.log(aj)
 module.exports = aj;
