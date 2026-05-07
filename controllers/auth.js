@@ -129,7 +129,8 @@ module.exports.addUser = asyncWrapper(async (req, res) => {
   const { username, email, password, role } = req.body
 
   // 1. Arcjet Protection (Uses IP in-flight, but doesn't store it in DB)
-  const decision = await aj.protect(req)
+  // To this:
+  const decision = await aj.protect(req, { requested: 1 })
   if (decision.isDenied()) {
     if (decision.reason.isRateLimit()) {
       throw new BadRequestError(
