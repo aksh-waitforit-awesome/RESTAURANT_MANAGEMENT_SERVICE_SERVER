@@ -73,33 +73,53 @@ module.exports.createAdmin = asyncWrapper(async (req, res) => {
   res.status(201).json({ message: "admin created" })
 })
 
+module.exports.createAdmin = asyncWrapper(async (req, res) => {
+  const existingAdmin = await User.findOne({ role: "demo_admin" })
+  if (existingAdmin) throw new BadRequestError("Demo admin already exists")
+
+  const admin = await User.create({
+    username: "demo_user",
+    email: "demo@gmail.com",
+    password: "demo12345",
+    role: "demo_admin",
+  })
+  res.status(201).json({ message: "demo admin created" })
+})
 // ---------------- ADD MANAGER OR STAFF (ADMIN/MANAGER)
 module.exports.addUser = asyncWrapper(async (req, res) => {
   const { username, email, password, role } = req.body
-
   if (!username || !email || !password || !role) {
     throw new BadRequestError("Provide username, email, password and role")
   }
+  const requesterRole = user.req.role
+  const allowedRoles = ["admin", "demo_admin"]
+  const isDemo = requesterRole === "demo_admin"
+  const expireAt = isDemo ? new Date(Date.now() + 3 * 60 * 1000) : null
 
   // Prevent creating another admin
-  if (role === "admin")
-    throw new BadRequestError("Cannot create admin via this route")
+  if (role === "admin" || role === "demo_admin")
+    throw new BadRequestError(
+      "Cannot create admin and demo_admin via this route",
+    )
 
   // Check email uniqueness
-  const existing = await User.findOne({ email })
-  if (existing) throw new BadRequestError("Email already in use")
+  const existing = await User.findOne({ $or: [{ username }, { email }] })
+  if (existing) throw new BadRequestError("Email or username already in use")
 
-  // Only admin or manager can create staff
-  if (!["admin", "manager"].includes(req.user.role)) {
+  // Only admin or demo_admin can create staff
+  if (!allowedRoles.includes(req.user.role)) {
     throw new UnauthorizedError("Access denied")
   }
 
-  // Only admin can create manager
-  if (role === "manager" && req.user.role !== "admin") {
-    throw new UnauthorizedError("Only admin can create manager")
-  }
+  const user = await User.create({
+    username,
+    email,
+    password,
+    role,
+    isDemo,
+    expireAt,
+  })
 
-  const user = await User.create({ username, email, password, role })
   res.status(201).json({
     user,
   })
