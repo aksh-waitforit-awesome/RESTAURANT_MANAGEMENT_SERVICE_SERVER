@@ -86,3 +86,4 @@ server.listen(port, async () => {
   console.log(`server listening on ${port}`)
   console.log(`server listening on ws://localhost:${port}/ws`)
 })
+redisClient.set("foo", "bar").then(() => console.log("Redis Initialized"))

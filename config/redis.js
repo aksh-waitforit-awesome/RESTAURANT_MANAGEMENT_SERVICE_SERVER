@@ -1,7 +1,10 @@
 const { Redis } = require("ioredis")
 
-const redisUrl = process.env.REDIS_URL || "redis://127.0.0.1:6379"
-
+const redisUrl =
+  process.env.NODE_ENV === "production"
+    ? process.env.REDIS_URL
+    : "redis://127.0.0.1:6379"
+console.log(redisUrl)
 // Production environments (like Heroku/Render) often require
 // TLS (rediss://) and rejecting unauthorized certificates.
 const options = redisUrl.startsWith("rediss://")
