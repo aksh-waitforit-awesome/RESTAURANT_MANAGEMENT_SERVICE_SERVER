@@ -1,30 +1,40 @@
-// Import the entire module
-const arcjetModule = require("@arcjet/node")
+// utils/arcjet.js
+let aj = null
 
-// Access the function from the 'default' property or the named export
-const arcjet = arcjetModule.default || arcjetModule.arcjet
-const tokenBucket = arcjetModule.tokenBucket
-const shield = arcjetModule.shield
+/**
+ * Singleton getter for Arcjet instance.
+ * Handles the dynamic import of the ESM @arcjet/node module.
+ */
+async function getArcjet() {
+  if (aj) return aj
 
-// Check if it's actually a function before calling it
-if (typeof arcjet !== "function") {
-  throw new Error(
-    "Arcjet initialization failed: arcjet is not a function. Check your @arcjet/node version.",
-  )
+  try {
+    // Dynamic import required for ESM modules in CommonJS
+    const {
+      default: arcjet,
+      tokenBucket,
+      shield,
+    } = await import("@arcjet/node")
+
+    aj = arcjet({
+      key: process.env.ARCJET_KEY,
+      characteristics: ["ip.src"],
+      rules: [
+        shield({ mode: "LIVE" }),
+        tokenBucket({
+          mode: "LIVE",
+          refillRate: 5,
+          interval: "24h",
+          capacity: 5,
+        }),
+      ],
+    })
+
+    return aj
+  } catch (error) {
+    console.error("Failed to initialize Arcjet:", error)
+    throw error
+  }
 }
 
-const aj = arcjet({
-  key: process.env.ARCJET_KEY,
-  characteristics: ["ip.src"], // Still using IP to protect shared demo accounts
-  rules: [
-    shield({ mode: "LIVE" }),
-    tokenBucket({
-      mode: "LIVE",
-      refillRate: 5,
-      interval: "24h",
-      capacity: 5,
-    }),
-  ],
-})
-
-module.exports = aj
+module.exports = getArcjet
