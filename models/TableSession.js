@@ -35,6 +35,7 @@ const TableSessionSchema = new mongoose.Schema(
       type: Date,
       // This stays null until the session status changes to 'Closed'
     },
+    
   },
   { timestamps: true },
 )
