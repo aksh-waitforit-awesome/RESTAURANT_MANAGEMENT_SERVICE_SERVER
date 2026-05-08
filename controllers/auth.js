@@ -4,7 +4,7 @@ const BadRequestError = require("../errors/badRequestError")
 const UnauthorizedError = require("../errors/unauthorizedError")
 const NotFoundError = require("../errors/notFoundError")
 const jwt = require("jsonwebtoken")
-const getArcjet = require("../utils/arcjet");
+const getArcjet = require("../utils/arcjet")
 // const aj = require("../utils/arcjet.js")
 // ---------------- REGISTER (CUSTOMER ONLY)
 module.exports.register = asyncWrapper(async (req, res) => {
@@ -87,56 +87,17 @@ module.exports.createDemoAdmin = asyncWrapper(async (req, res) => {
   res.status(201).json({ message: "demo admin created" })
 })
 // ---------------- ADD MANAGER OR STAFF (ADMIN/MANAGER)
-/*module.exports.addUser = asyncWrapper(async (req, res) => {
-  const { username, email, password, role } = req.body
-  if (!username || !email || !password || !role) {
-    throw new BadRequestError("Provide username, email, password and role")
-  }
-  const requesterRole = req.user.role
-  const allowedRoles = ["admin", "demo_admin"]
-  const isDemo = requesterRole === "demo_admin"
-  console.log(isDemo, requesterRole)
-  const expireAt = isDemo ? new Date(Date.now() + 3 * 60 * 1000) : null
-
-  // Prevent creating another admin
-  if (role === "admin" || role === "demo_admin")
-    throw new BadRequestError(
-      "Cannot create admin and demo_admin via this route",
-    )
-
-  // Check email uniqueness
-  const existing = await User.findOne({ $or: [{ username }, { email }] })
-  if (existing) throw new BadRequestError("Email or username already in use")
-
-  // Only admin or demo_admin can create staff
-  if (!allowedRoles.includes(req.user.role)) {
-    throw new UnauthorizedError("Access denied")
-  }
-
-  const user = await User.create({
-    username,
-    email,
-    password,
-    role,
-    isDemo,
-    expireAt,
-  })
-
-  res.status(201).json({
-    user,
-  })
-})*/
-/*module.exports.addUser = asyncWrapper(async (req, res) => {
+module.exports.addUser = asyncWrapper(async (req, res) => {
   const { username, email, password, role } = req.body
 
-  // 1. Arcjet Protection (Uses IP in-flight, but doesn't store it in DB)
-  // To this:
+  // 1. Arcjet Protection
+  // We call the getter and then run the protection logic immediately
+  const aj = await getArcjet()
   const decision = await aj.protect(req, { requested: 1 })
+
   if (decision.isDenied()) {
     if (decision.reason.isRateLimit()) {
-      throw new BadRequestError(
-        "Rate limit exceeded. Try again in a few minutes.",
-      )
+      throw new BadRequestError("Rate limit exceeded. Try again in 24 hours.")
     }
     throw new UnauthorizedError("Request blocked by security shield.")
   }
@@ -152,7 +113,6 @@ module.exports.createDemoAdmin = asyncWrapper(async (req, res) => {
   const isDemoAdmin = requesterRole === "demo_admin"
 
   // 3. Security: Prevent role escalation
-  // Even a real admin shouldn't be able to create another admin via this route
   if (["admin", "demo_admin"].includes(role)) {
     throw new BadRequestError(
       "Cannot create administrative roles via this endpoint.",
@@ -170,52 +130,6 @@ module.exports.createDemoAdmin = asyncWrapper(async (req, res) => {
     throw new BadRequestError("Username or email already exists.")
   }
 
-  // 6. Handle Demo Logic
-  // We get a random UUID from the header passed by the frontend
-  /*const demoSessionId = req.headers["x-demo-session-id"]*/
-module.exports.addUser = asyncWrapper(async (req, res) => {
-  const { username, email, password, role } = req.body;
-
-  // 1. Arcjet Protection
-  // We call the getter and then run the protection logic immediately
-  const aj = await getArcjet();
-  const decision = await aj.protect(req, { requested: 1 });
-
-  if (decision.isDenied()) {
-    if (decision.reason.isRateLimit()) {
-      throw new BadRequestError("Rate limit exceeded. Try again in 24 hours.");
-    }
-    throw new UnauthorizedError("Request blocked by security shield.");
-  }
-
-  // 2. Initial Validation
-  if (!username || !email || !password || !role) {
-    throw new BadRequestError(
-      "All fields (username, email, password, role) are required."
-    );
-  }
-
-  const requesterRole = req.user.role;
-  const isDemoAdmin = requesterRole === "demo_admin";
-
-  // 3. Security: Prevent role escalation
-  if (["admin", "demo_admin"].includes(role)) {
-    throw new BadRequestError(
-      "Cannot create administrative roles via this endpoint."
-    );
-  }
-
-  // 4. Authorization check
-  if (requesterRole !== "admin" && !isDemoAdmin) {
-    throw new UnauthorizedError("You do not have permission to add staff.");
-  }
-
-  // 5. Check if User already exists
-  const existingUser = await User.findOne({ $or: [{ username }, { email }] });
-  if (existingUser) {
-    throw new BadRequestError("Username or email already exists.");
-  }
-
   // 6. Prepare User Data
   const userData = {
     username,
@@ -223,15 +137,15 @@ module.exports.addUser = asyncWrapper(async (req, res) => {
     password,
     role,
     isDemo: isDemoAdmin,
-  };
+  }
 
   if (isDemoAdmin) {
     // Demo accounts automatically expire in 3 minutes
-    userData.expireAt = new Date(Date.now() + 3 * 60 * 1000);
+    userData.expireAt = new Date(Date.now() + 3 * 60 * 1000)
   }
 
   // 7. Create User
-  const user = await User.create(userData);
+  const user = await User.create(userData)
 
   // 8. Final Response
   res.status(201).json({
@@ -245,37 +159,9 @@ module.exports.addUser = asyncWrapper(async (req, res) => {
       role: user.role,
       expireAt: user.expireAt,
     },
-  });
-});
-  const userData = {
-    username,
-    email,
-    password,
-    role,
-    isDemo: isDemoAdmin,
-  }
-
-  if (isDemoAdmin) {
-    userData.expireAt = new Date(Date.now() + 3 * 60 * 1000) // 3 minutes
-  }
-
-  // 7. Create User
-  const user = await User.create(userData)
-
-  // 8. Response (Strip sensitive data)
-  res.status(201).json({
-    success: true,
-    message: isDemoAdmin
-      ? "Demo staff created (expires in 3 mins)"
-      : "Staff created successfully",
-    user: {
-      id: user._id,
-      username: user.username,
-      role: user.role,
-      expireAt: user.expireAt,
-    },
   })
-})*/
+})
+
 module.exports.refresh = asyncWrapper(async (req, res) => {
   const refreshToken = req.cookies.refreshToken
   console.log("refresh:", refreshToken)
