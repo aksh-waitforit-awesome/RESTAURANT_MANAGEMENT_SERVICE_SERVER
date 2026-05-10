@@ -45,7 +45,6 @@ const getMenuItems = async (req, res) => {
 
     const items = await MenuItem.find(query)
       .populate("category", "name")
-      .populate("addOns")
       .sort(sortOptions)
       .limit(limit * 1)
       .skip((page - 1) * limit)
@@ -61,12 +60,12 @@ const getMenuItems = async (req, res) => {
     }
 
     // Save to Redis (Expire in 1 hour)
-    await redisClient.set(cacheKey, JSON.stringify(responseData), {
-      EX: 3600,
-    })
+    await redisClient.setex(cacheKey,3600, JSON.stringify(responseData))
 
     res.status(200).json(responseData)
   } catch (error) {
+    console.log("get menu item api", error)
+
     res.status(500).json({ message: error.message })
   }
 }
@@ -76,9 +75,9 @@ const createMenuItem = async (req, res) => {
   try {
     const newItem = new MenuItem(req.body)
     await newItem.save()
-    
+
     await clearMenuItemCache() // Wipe cache so new item shows up
-    
+
     res.status(201).json({ success: true, menuItem: newItem })
   } catch (error) {
     res.status(400).json({ message: error.message })
@@ -96,10 +95,11 @@ const updateMenuItem = async (req, res) => {
 
     if (!updatedItem) return res.status(404).json({ message: "Item not found" })
 
-    await clearMenuItemCache() 
+    await clearMenuItemCache()
 
     res.status(200).json({ success: true, menuItem: updatedItem })
   } catch (error) {
+    console.log(error)
     res.status(400).json({ message: error.message })
   }
 }
