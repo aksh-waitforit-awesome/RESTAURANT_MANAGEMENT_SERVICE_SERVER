@@ -83,13 +83,10 @@ app.locals.newOnlineOrderPlaced = newOnlineOrderPlaced
 app.locals.SubOrderStatusUpdated = SubOrderStatusUpdated
 app.locals.waiterSendOrderToKitchen = waiterSendOrderToKitchen
 app.locals.sessionCompleted = sessionCompleted
-
+global.demoEnvironmentCleaned = demoEnvironmentCleaned
 server.listen(port, async () => {
   await connectDB(process.env.MONGO_KEY)
   console.log(`server listening on ${port}`)
   console.log(`server listening on ws://localhost:${port}/ws`)
 })
 redisClient.set("foo", "bar").then(() => console.log("Redis Initialized"))
-module.exports = {
-  demoEnvironmentCleaned
-}

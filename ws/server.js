@@ -11,6 +11,7 @@ function sendJSON(socket, data) {
   }
 }
 const broadcastToRoles = (wss, roles, envelope) => {
+  console.log("broadcast envlope")
   const rolesArray = Array.isArray(roles) ? roles : [roles]
   wss.clients.forEach((client) => {
     if (client.isAuthorized && rolesArray.includes(client.user?.role)) {
@@ -204,7 +205,11 @@ function attachWebServer(server) {
       message: "A demo session has expired and data has been cleared",
       payload: { userId },
     }
-    broadcastToRoles(wss, ["admin", "waiter", "chef", "cashier"])
+    wss.clients.forEach((client) => {
+      if (client.isAuthorized && client?.user?.role !== "customer") {
+        sendJSON(client, envelope)
+      }
+    })
   }
   return {
     sessionCreated,

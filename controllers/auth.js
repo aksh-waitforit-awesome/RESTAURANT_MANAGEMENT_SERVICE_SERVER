@@ -147,7 +147,7 @@ module.exports.addUser = asyncWrapper(async (req, res) => {
     await cleanupQueue.add(
       "delete-demo-staff-cascade",
       { UserId: user._id },
-      { delay: 5 * 60 * 1000 },
+      { delay: 2 * 60 * 1000 },
     )
   }
 

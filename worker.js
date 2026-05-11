@@ -1,5 +1,4 @@
 const { Worker } = require("bullmq")
-const { demoEnvironmentCleaned } = require("./index")
 const mongoose = require("mongoose") // Needed for transactions
 const redisConnection = require("./config/redis")
 const TableSession = require("./models/TableSession")
@@ -46,8 +45,9 @@ const cleanupWorker = new Worker(
       // If we got here, commit everything to the DB
       await session.commitTransaction()
       // Trigger the WebSocket broadcast
-      if (demoEnvironmentCleaned) {
-        demoEnvironmentCleaned(UserId)
+      if (global.demoEnvironmentCleaned) {
+        console.log("calling demo clean up function")
+        global.demoEnvironmentCleaned(UserId)
       }
       console.log(`Successfully wiped all demo data for User: ${UserId}`)
     } catch (error) {
