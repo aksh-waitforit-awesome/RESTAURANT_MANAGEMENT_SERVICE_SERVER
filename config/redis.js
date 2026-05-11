@@ -7,10 +7,15 @@ const redisUrl =
 console.log(redisUrl)
 // Production environments (like Heroku/Render) often require
 // TLS (rediss://) and rejecting unauthorized certificates.
-const options = redisUrl.startsWith("rediss://")
-  ? { tls: { rejectUnauthorized: false } }
-  : {}
-
+// Configuration for Redis
+const options = {
+  // CRITICAL: BullMQ requires this to be null
+  maxRetriesPerRequest: null,
+  // Add TLS if the URL is secure
+  ...(redisUrl.startsWith("rediss://")
+    ? { tls: { rejectUnauthorized: false } }
+    : {}),
+}
 const client = new Redis(redisUrl, options)
 
 // Error handling is crucial to prevent the process from crashing
