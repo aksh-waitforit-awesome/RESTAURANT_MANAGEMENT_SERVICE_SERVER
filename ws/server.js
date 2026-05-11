@@ -198,6 +198,14 @@ function attachWebServer(server) {
       }
     })
   }
+  function demoEnvironmentCleaned(userId) {
+    const envelope = {
+      type: "DEMO_DATA_CLEANUP",
+      message: "A demo session has expired and data has been cleared",
+      payload: { userId },
+    }
+    broadcastToRoles(wss, ["admin", "waiter", "chef", "cashier"])
+  }
   return {
     sessionCreated,
     orderStatusUpdated,
@@ -205,6 +213,7 @@ function attachWebServer(server) {
     SubOrderStatusUpdated,
     waiterSendOrderToKitchen,
     sessionCompleted,
+    demoEnvironmentCleaned,
   }
 }
 

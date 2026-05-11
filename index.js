@@ -19,10 +19,12 @@ const deliveryRoute = require("./routes/delivery")
 const tableRoute = require("./routes/table")
 const tableSessionRoute = require("./routes/TableSession")
 const auth = require("./middlewares/auth")
+require("./worker")
 const { handleStripeWebhook } = require("./controllers/order")
 const { attachWebServer } = require("./ws/server")
 const app = express()
 const server = http.createServer(app)
+
 console.log("admin url", process.env.ADMIN_URL)
 app.set("trust proxy", 1)
 app.use(
@@ -73,6 +75,7 @@ const {
   SubOrderStatusUpdated,
   waiterSendOrderToKitchen,
   sessionCompleted,
+  demoEnvironmentCleaned,
 } = attachWebServer(server)
 app.locals.sessionCreated = sessionCreated
 app.locals.orderStatusUpdated = orderStatusUpdated
@@ -87,3 +90,6 @@ server.listen(port, async () => {
   console.log(`server listening on ws://localhost:${port}/ws`)
 })
 redisClient.set("foo", "bar").then(() => console.log("Redis Initialized"))
+module.exports = {
+  demoEnvironmentCleaned
+}

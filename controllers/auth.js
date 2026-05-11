@@ -5,6 +5,7 @@ const UnauthorizedError = require("../errors/unauthorizedError")
 const NotFoundError = require("../errors/notFoundError")
 const jwt = require("jsonwebtoken")
 const getArcjet = require("../utils/arcjet")
+const cleanupQueue = require("../queue")
 // const aj = require("../utils/arcjet.js")
 // ---------------- REGISTER (CUSTOMER ONLY)
 module.exports.register = asyncWrapper(async (req, res) => {
@@ -139,13 +140,16 @@ module.exports.addUser = asyncWrapper(async (req, res) => {
     isDemo: isDemoAdmin,
   }
 
-  if (isDemoAdmin) {
-    // Demo accounts automatically expire in 3 minutes
-    userData.expireAt = new Date(Date.now() + 3 * 60 * 1000)
-  }
-
   // 7. Create User
   const user = await User.create(userData)
+  if (isDemoAdmin) {
+    // Demo accounts automatically expire in 3 minutes
+    await cleanupQueue.add(
+      "delete-demo-staff-cascade",
+      { UserId: user._id },
+      { delay: 5 * 60 * 1000 },
+    )
+  }
 
   // 8. Final Response
   res.status(201).json({
