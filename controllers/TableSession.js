@@ -80,11 +80,21 @@ exports.closeTableSession = asyncWrapper(async (req, res) => {
   }).populate("table_id", "tableNumber")
 
   if (!session) throw new NotFoundError("No active session found")
+  const unservedOrderExists = await SubOrder.exists({
+    tableSession_id: session._id,
+    allServed: false,
+  })
 
+  if (unservedOrderExists) {
+    throw new BadRequestError(
+      "Cannot cancel: Some items are still being prepared or served.",
+    )
+  }
   // 2. Fetch SubOrders - Optimization: Only select fields you need
   const allSubOrders = await SubOrder.find({
     tableSession_id: session._id,
-  }).select("items subTotal")
+  }).select("items subTotal ")
+
   if (allSubOrders.length === 0)
     throw new BadRequestError("Cannot close an empty session")
 

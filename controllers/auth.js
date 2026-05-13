@@ -65,26 +65,26 @@ module.exports.login = asyncWrapper(async (req, res) => {
 module.exports.createAdmin = asyncWrapper(async (req, res) => {
   const existingAdmin = await User.findOne({ role: "admin" })
   if (existingAdmin) throw new BadRequestError("Admin already exists")
-
-  const admin = await User.create({
-    username: "admin123",
-    email: "admin@gmail.com",
-    password: "adminPass123",
+  const adminData = {
+    username: process.env.ADMIN_USERNAME,
+    email: process.env.ADMIN_EMAIL,
+    password: process.env.ADMIN_PASSWORD,
     role: "admin",
-  })
+  }
+  const admin = await User.create(adminData)
   res.status(201).json({ message: "admin created" })
 })
 
 module.exports.createDemoAdmin = asyncWrapper(async (req, res) => {
-  const existingAdmin = await User.findOne({ role: "demo_admin" })
-  if (existingAdmin) throw new BadRequestError("Demo admin already exists")
-
-  const admin = await User.create({
-    username: "demo_user",
-    email: "demo@gmail.com",
-    password: "demo12345",
+  const existingDemoAdmin = await User.findOne({ role: "demo_admin" })
+  if (existingDemoAdmin) throw new BadRequestError("Demo admin already exists")
+  const demoAdminData = {
+    username: process.env.DEMO_ADMIN_USERNAME,
+    email: process.env.DEMO_ADMIN_EMAIL,
+    password: process.env.DEMO_ADMIN_PASSWORD,
     role: "demo_admin",
-  })
+  }
+  const demoAdmin = await User.create(demoAdminData)
   res.status(201).json({ message: "demo admin created" })
 })
 // ---------------- ADD MANAGER OR STAFF (ADMIN/MANAGER)
