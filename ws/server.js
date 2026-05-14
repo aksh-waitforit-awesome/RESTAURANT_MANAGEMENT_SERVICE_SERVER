@@ -211,6 +211,14 @@ function attachWebServer(server) {
       }
     })
   }
+  function emptySessionDeletion({ tableId, tableNumber, sessionId }) {
+    const envelope = {
+      type: "EMPTY_SESSION_DELETE",
+      message: `An Empty table session ${sessionId} of Table number ${tableNumber} is deleted `,
+      payload: { tableId, tableNumber, sessionId },
+    }
+    broadcastToRoles(wss, "waiter", envelope)
+  }
   return {
     sessionCreated,
     orderStatusUpdated,
@@ -219,6 +227,7 @@ function attachWebServer(server) {
     waiterSendOrderToKitchen,
     sessionCompleted,
     demoEnvironmentCleaned,
+    emptySessionDeletion,
   }
 }
 

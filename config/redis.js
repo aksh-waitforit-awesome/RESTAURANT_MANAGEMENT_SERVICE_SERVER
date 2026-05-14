@@ -3,7 +3,7 @@ const { Redis } = require("ioredis")
 const redisUrl =
   process.env.NODE_ENV === "production"
     ? process.env.REDIS_URL
-    : "redis://127.0.0.1:6379"
+    : "rediss://default:gQAAAAAAAc3OAAIgcDExNTUzYzNiYzQxYTQ0OTk0ODMxZDI1NzJkYjM1YTM3Zg@tough-chamois-118222.upstash.io:6379"
 console.log(redisUrl)
 // Production environments (like Heroku/Render) often require
 // TLS (rediss://) and rejecting unauthorized certificates.
@@ -22,8 +22,5 @@ const client = new Redis(redisUrl, options)
 // if the Redis server goes down.
 client.on("error", (err) => console.error("Redis Client Error", err))
 
-// Optional: Test the connection asynchronously elsewhere,
-// rather than blocking the module export.
-// client.set("foo", "bar").then(() => console.log("Redis Initialized"));
 
 module.exports = client

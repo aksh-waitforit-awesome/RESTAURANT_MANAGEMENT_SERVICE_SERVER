@@ -76,6 +76,7 @@ const {
   waiterSendOrderToKitchen,
   sessionCompleted,
   demoEnvironmentCleaned,
+  emptySessionDeletion,
 } = attachWebServer(server)
 app.locals.sessionCreated = sessionCreated
 app.locals.orderStatusUpdated = orderStatusUpdated
@@ -84,6 +85,7 @@ app.locals.SubOrderStatusUpdated = SubOrderStatusUpdated
 app.locals.waiterSendOrderToKitchen = waiterSendOrderToKitchen
 app.locals.sessionCompleted = sessionCompleted
 global.demoEnvironmentCleaned = demoEnvironmentCleaned
+app.locals.emptySessionDeletion = emptySessionDeletion
 server.listen(port, async () => {
   await connectDB(process.env.MONGO_KEY)
   console.log(`server listening on ${port}`)

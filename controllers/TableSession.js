@@ -7,6 +7,7 @@ const asyncWrapper = require("../utils/asyncWrapper")
 const BadRequestError = require("../errors/badRequestError")
 const NotFoundError = require("../errors/notFoundError")
 const ConflictError = require("../errors/conflictError")
+const { json } = require("stream/consumers")
 exports.createTableSession = asyncWrapper(async (req, res) => {
   const { table_id } = req.body
   const waiter_id = req.user.user_id // Clean: Handled by Auth middleware
@@ -66,20 +67,19 @@ exports.createTableSession = asyncWrapper(async (req, res) => {
 })
 
 exports.closeTableSession = asyncWrapper(async (req, res) => {
+  const { user_id: waiterId } = req.user
+  console.log("close table session req.user", req.user)
   const { table_id, paymentMethod = "yet_to_decide" } = req.body
-  console.log(
-    "Closing session for table_id:",
-    table_id,
-    "with paymentMethod:",
-    paymentMethod,
-  )
+  const ws = req.app.locals
   // 1. Find the Active Session (Use lean() if you don't need Mongoose methods)
   const session = await TableSession.findOne({
     table_id,
     status: "Active",
   }).populate("table_id", "tableNumber")
 
-  if (!session) throw new NotFoundError("No active session found")
+  if (!session) {
+    throw new NotFoundError("session not found")
+  }
   const unservedOrderExists = await SubOrder.exists({
     tableSession_id: session._id,
     allServed: false,
@@ -87,7 +87,7 @@ exports.closeTableSession = asyncWrapper(async (req, res) => {
 
   if (unservedOrderExists) {
     throw new BadRequestError(
-      "Cannot cancel: Some items are still being prepared or served.",
+      "Cannot end session. Some items are still being prepared or served.",
     )
   }
   // 2. Fetch SubOrders - Optimization: Only select fields you need
@@ -95,8 +95,19 @@ exports.closeTableSession = asyncWrapper(async (req, res) => {
     tableSession_id: session._id,
   }).select("items subTotal ")
 
-  if (allSubOrders.length === 0)
-    throw new BadRequestError("Cannot close an empty session")
+  if (allSubOrders.length === 0) {
+    try {
+      await TableSession.findByIdAndDelete(session._id)
+      res.app.locals.emptySessionDeletion({
+        tableNumber: session.table_id.tableNumber,
+        tableId: session.table_id._id,
+        sessionId: session._id,
+      })
+      res.json(200).json({ message: `empty session deleted` })
+    } catch (err) {
+      throw new Error(err)
+    }
+  }
 
   const billItems = allSubOrders.flatMap((sub) => sub.items)
   const totalAmount = allSubOrders.reduce((acc, sub) => acc + sub.subTotal, 0)
